@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+const char* englishFreqOrder = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
+
+void decrypt(char *cipher, char *plain, int key) {
+    int len = strlen(cipher);
+    for (int i = 0; i < len; i++) {
+        if (isalpha(cipher[i])) {
+            char base = isupper(cipher[i]) ? 'A' : 'a';
+            plain[i] = (cipher[i] - base - key + 26) % 26 + base;
+        } else {
+            plain[i] = cipher[i];
+        }
+    }
+    plain[len] = '\0';
+}
+
+int score_plaintext(char *plain) {
+    int score = 0;
+    for (int i = 0; plain[i]; i++) {
+        char c = toupper(plain[i]);
+        const char *pos = strchr(englishFreqOrder, c);
+        if (pos) score += 26 - (pos - englishFreqOrder); // higher freq letters get higher score
+    }
+    return score;
+}
+
+int main() {
+    char cipher[1024], plaintext[1024];
+    printf("Enter ciphertext: ");
+    fgets(cipher, sizeof(cipher), stdin);
+    cipher[strcspn(cipher, "\n")] = 0;
+
+    int keys[26];
+    int scores[26];
+    char candidates[26][1024];
+
+    for (int k = 0; k < 26; k++) {
+        decrypt(cipher, candidates[k], k);
+        scores[k] = score_plaintext(candidates[k]);
+        keys[k] = k;
+    }
+
+    // Simple bubble sort descending by score
+    for (int i = 0; i < 25; i++) {
+        for (int j = i+1; j < 26; j++) {
+            if (scores[j] > scores[i]) {
+                int tmp_score = scores[i]; scores[i] = scores[j]; scores[j] = tmp_score;
+                int tmp_key = keys[i]; keys[i] = keys[j]; keys[j] = tmp_key;
+                char tmp_plain[1024];
+                strcpy(tmp_plain, candidates[i]);
+                strcpy(candidates[i], candidates[j]);
+                strcpy(candidates[j], tmp_plain);
+            }
+        }
+    }
+
+    printf("\nTop 10 possible plaintexts:\n");
+    for (int i = 0; i < 10 && i < 26; i++) {
+        printf("Key %2d: %s\n", keys[i], candidates[i]);
+    }
+    return 0;
+}
