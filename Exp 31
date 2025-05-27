@@ -1,0 +1,54 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16  // Use 8 for 64-bit, 16 for 128-bit CMAC
+
+// Constants for CMAC based on block size
+const uint8_t Rb_128 = 0x87;  // For 128-bit blocks
+const uint8_t Rb_64  = 0x1B;  // For 64-bit blocks
+
+// Dummy cipher: Just returns a constant (replace with real AES)
+void dummy_cipher(uint8_t *input, uint8_t *output) {
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        output[i] = (i + 1);  // Just fill with non-zero dummy bytes
+}
+
+// Left shift 1 bit of block
+void left_shift(uint8_t *input, uint8_t *output, int len) {
+    uint8_t overflow = 0;
+    for (int i = len - 1; i >= 0; i--) {
+        output[i] = (input[i] << 1) | overflow;
+        overflow = (input[i] & 0x80) ? 1 : 0;
+    }
+}
+
+// XOR last byte with Rb constant
+void xor_rb(uint8_t *block, uint8_t rb, int len) {
+    block[len - 1] ^= rb;
+}
+
+void print_block(const char *label, uint8_t *block) {
+    printf("%s: ", label);
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X", block[i]);
+    printf("\n");
+}
+
+int main() {
+    uint8_t zero_block[BLOCK_SIZE] = {0};
+    uint8_t L[BLOCK_SIZE], K1[BLOCK_SIZE], K2[BLOCK_SIZE];
+    uint8_t rb = (BLOCK_SIZE == 16) ? Rb_128 : Rb_64;
+
+    dummy_cipher(zero_block, L);
+    print_block("L", L);
+
+    left_shift(L, K1, BLOCK_SIZE);
+    if (L[0] & 0x80) xor_rb(K1, rb, BLOCK_SIZE);
+    print_block("K1", K1);
+
+    left_shift(K1, K2, BLOCK_SIZE);
+    if (K1[0] & 0x80) xor_rb(K2, rb, BLOCK_SIZE);
+    print_block("K2", K2);
+
+    return 0;
+}
