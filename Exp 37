@@ -1,0 +1,56 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_LEN 1000
+
+char englishFreq[] = "ETAOINSHRDLCUMWFGYPBVKJXQZ"; // Most to least frequent letters
+
+void countFreq(char *text, int *freq) {
+    for (int i = 0; text[i]; i++)
+        if (text[i] >= 'A' && text[i] <= 'Z')
+            freq[text[i] - 'A']++;
+}
+
+void sortFreq(int *freq, char *map) {
+    for (int i = 0; i < 26; i++) map[i] = i + 'A';
+    for (int i = 0; i < 25; i++) {
+        for (int j = i + 1; j < 26; j++) {
+            if (freq[j] > freq[i]) {
+                int tmp = freq[i]; freq[i] = freq[j]; freq[j] = tmp;
+                char c = map[i]; map[i] = map[j]; map[j] = c;
+            }
+        }
+    }
+}
+
+void decrypt(char *cipher, char *map, char *out) {
+    for (int i = 0; cipher[i]; i++) {
+        char c = cipher[i];
+        if (c >= 'A' && c <= 'Z') {
+            for (int j = 0; j < 26; j++)
+                if (c == map[j]) {
+                    out[i] = englishFreq[j];
+                    break;
+                }
+        } else {
+            out[i] = c;
+        }
+    }
+    out[strlen(cipher)] = '\0';
+}
+
+int main() {
+    char cipher[MAX_LEN] = "ZHOFRPH WR WKH ZRUOG RI FUBSWRJUDSKB"; // Encrypted in monoalphabetic cipher
+    int freq[26] = {0};
+    char map[26], result[MAX_LEN];
+
+    countFreq(cipher, freq);
+    sortFreq(freq, map);
+
+    printf("Top 1 Possible Plaintext:\n");
+    decrypt(cipher, map, result);
+    printf("%s\n", result);
+
+    return 0;
+}
