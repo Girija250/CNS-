@@ -1,0 +1,22 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void encrypt(char *plaintext, int key[], int keylen) {
+    for (int i = 0, j = 0; plaintext[i]; i++) {
+        if (isalpha(plaintext[i])) {
+            char base = isupper(plaintext[i]) ? 'A' : 'a';
+            plaintext[i] = (plaintext[i] - base + key[j++ % keylen]) % 26 + base;
+        }
+    }
+}
+
+int main() {
+    char text[] = "send more money";
+    int key[] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9};
+    int len = sizeof(key) / sizeof(key[0]);
+
+    encrypt(text, key, len);
+    printf("Ciphertext: %s\n", text);
+    return 0;
+}
