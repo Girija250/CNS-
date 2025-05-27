@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/evp.h>
+
+#define BLOCK_SIZE 16
+
+// Pad with 0x80 followed by 0x00s to fill the block
+int pad(unsigned char *in, int len) {
+    in[len] = 0x80;
+    for (int i = len + 1; i < BLOCK_SIZE; i++)
+        in[i] = 0x00;
+    return BLOCK_SIZE;
+}
+
+void encrypt(const char *label, const EVP_CIPHER *cipher, int use_iv) {
+    unsigned char key[16] = "1234567890123456";
+    unsigned char iv[16]  = "initvector123456";
+    unsigned char plaintext[BLOCK_SIZE] = "HELLOAESBLOCK"; // 13 bytes
+    unsigned char padded[BLOCK_SIZE];
+    unsigned char ciphertext[64], decrypted[64];
+    int len, clen = 0, dlen = 0;
+
+    // Pad manually
+    int plen = pad(padded, strlen((char *)plaintext));
+    memcpy(padded, plaintext, strlen((char *)plaintext));
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+
+    // Encrypt
+    EVP_EncryptInit_ex(ctx, cipher, NULL, key, use_iv ? iv : NULL);
+    EVP_EncryptUpdate(ctx, ciphertext, &len, padded, plen);
+    clen = len;
+    EVP_EncryptFinal_ex(ctx, ciphertext + len, &len);
+    clen += len;
+
+    // Decrypt
+    EVP_CIPHER_CTX_reset(ctx);
+    EVP_DecryptInit_ex(ctx, cipher, NULL, key, use_iv ? iv : NULL);
+    EVP_DecryptUpdate(ctx, decrypted, &len, ciphertext, clen);
+    dlen = len;
+    EVP_DecryptFinal_ex(ctx, decrypted + len, &len);
+    dlen += len;
+    decrypted[dlen] = '\0';
+
+    printf("\nMode: %s\nDecrypted: ", label);
+    for (int i = 0; i < dlen; i++)
+        if (decrypted[i] >= 32 && decrypted[i] <= 126)
+            putchar(decrypted[i]);
+        else
+            printf("\\x%02x", decrypted[i]);
+
+    EVP_CIPHER_CTX_free(ctx);
+}
+
+int main() {
+    encrypt("ECB", EVP_aes_128_ecb(), 0);
+    encrypt("CBC", EVP_aes_128_cbc(), 1);
+    encrypt("CFB", EVP_aes_128_cfb128(), 1);
+    return 0;
+}
