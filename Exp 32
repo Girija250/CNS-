@@ -1,0 +1,33 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// Simulated DSA signature function
+void dsa_sign(const char* message, int private_key, int k, int* r, int* s) {
+    // Simulate r and s based on k and private key
+    *r = (k * 123) % 101;            // Fake r
+    *s = (private_key * *r + k) % 101; // Fake s
+}
+
+int main() {
+    const char* msg = "Hello";
+    int private_key = 17;
+    int r1, s1, r2, s2;
+
+    srand(time(NULL));
+    int k1 = rand() % 100 + 1;
+    int k2 = rand() % 100 + 1;
+
+    dsa_sign(msg, private_key, k1, &r1, &s1);
+    dsa_sign(msg, private_key, k2, &r2, &s2);
+
+    printf("DSA Signature 1: r = %d, s = %d (k = %d)\n", r1, s1, k1);
+    printf("DSA Signature 2: r = %d, s = %d (k = %d)\n", r2, s2, k2);
+
+    if (r1 != r2 || s1 != s2)
+        printf("✅ Signatures are different for same message (due to different k)\n");
+    else
+        printf("❌ Signatures are same (should not happen in DSA)\n");
+
+    return 0;
+}
