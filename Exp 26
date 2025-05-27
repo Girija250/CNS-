@@ -1,0 +1,49 @@
+#include <stdio.h>
+
+// Compute gcd (Euclidean Algorithm)
+int gcd(int a, int b) {
+    while (b != 0) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+// Extended Euclidean Algorithm to find modular inverse
+int modInverse(int e, int phi) {
+    int t = 0, newt = 1, r = phi, newr = e, quotient, temp;
+    while (newr != 0) {
+        quotient = r / newr;
+        temp = newt; newt = t - quotient * newt; t = temp;
+        temp = newr; newr = r - quotient * newr; r = temp;
+    }
+    if (r > 1) return -1; // No inverse
+    if (t < 0) t += phi;
+    return t;
+}
+
+int main() {
+    int n = 3599;      // modulus (same)
+    int p = 59, q = 61; // factors of n (assumed known after private key leak)
+    int phi = (p - 1)*(q - 1);
+
+    int old_e = 31;    // old public key
+    int old_d = modInverse(old_e, phi); // old private key (leaked)
+
+    int new_e = 17;    // Bob wants a new public key
+    if (gcd(new_e, phi) != 1) {
+        printf("new_e and phi are not coprime, choose another e.\n");
+        return 1;
+    }
+
+    int new_d = modInverse(new_e, phi); // new private key
+
+    printf("Old key pair: e=%d, d=%d\n", old_e, old_d);
+    printf("New key pair: e=%d, d=%d\n", new_e, new_d);
+
+    printf("Note: Since n is the same, attacker knowing old_d can factor n and find new_d.\n");
+    printf("Thus, reusing the modulus is NOT safe.\n");
+
+    return 0;
+}
