@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdint.h>
+
+uint8_t sdes_encrypt(uint8_t block, uint16_t key) {
+    // Simulated S-DES encryption for CTR counter values
+    switch (block) {
+        case 0x00: return 0x39;  // Encrypt(counter 0)
+        case 0x01: return 0x4D;  // Encrypt(counter 1)
+        case 0x02: return 0x36;  // Encrypt(counter 2)
+        default: return 0x00;    // Default dummy output
+    }
+}
+
+// XOR plaintext with keystream from encrypted counter
+void ctr_encrypt(uint8_t *plaintext, uint8_t *ciphertext, int len, uint8_t start_counter, uint16_t key) {
+    for (int i = 0; i < len; i++) {
+        uint8_t counter = start_counter + i;
+        uint8_t keystream = sdes_encrypt(counter, key);
+        ciphertext[i] = plaintext[i] ^ keystream;
+    }
+}
+
+// Same logic for decrypt in CTR
+void ctr_decrypt(uint8_t *ciphertext, uint8_t *plaintext, int len, uint8_t start_counter, uint16_t key) {
+    ctr_encrypt(ciphertext, plaintext, len, start_counter, key); // Symmetric
+}
+
+void print_bin(uint8_t b) {
+    for (int i = 7; i >= 0; i--) printf("%d", (b >> i) & 1);
+}
+
+int main() {
+    uint8_t plaintext[3]  = {0x01, 0x02, 0x04};
+    uint8_t ciphertext[3] = {0}, decrypted[3] = {0};
+    uint16_t key = 0x1FD;  // 0111111101
+    uint8_t counter = 0x00;
+
+    ctr_encrypt(plaintext, ciphertext, 3, counter, key);
+    ctr_decrypt(ciphertext, decrypted, 3, counter, key);
+
+    printf("Encrypted:\n");
+    for (int i = 0; i < 3; i++) { print_bin(ciphertext[i]); printf(" "); }
+
+    printf("\nDecrypted:\n");
+    for (int i = 0; i < 3; i++) { print_bin(decrypted[i]); printf(" "); }
+
+    return 0;
+}
