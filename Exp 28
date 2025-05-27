@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <math.h>
+
+// Modular exponentiation: (base^exp) mod mod
+unsigned long long mod_exp(unsigned long long base, unsigned long long exp, unsigned long long mod) {
+    unsigned long long result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
+int main() {
+    unsigned long long q = 23; // public prime modulus
+    unsigned long long a = 5;  // public base (primitive root mod q)
+
+    unsigned long long alice_secret = 6; // Alice's secret x
+    unsigned long long bob_secret = 15;  // Bob's secret x
+
+    // Alice sends A = a^x mod q
+    unsigned long long alice_send = mod_exp(a, alice_secret, q);
+    // Bob sends B = a^x mod q
+    unsigned long long bob_send = mod_exp(a, bob_secret, q);
+
+    // Each computes shared key
+    unsigned long long alice_key = mod_exp(bob_send, alice_secret, q);
+    unsigned long long bob_key = mod_exp(alice_send, bob_secret, q);
+
+    printf("Standard Diffie-Hellman:\n");
+    printf("Alice sends: %llu\n", alice_send);
+    printf("Bob sends: %llu\n", bob_send);
+    printf("Alice computes key: %llu\n", alice_key);
+    printf("Bob computes key: %llu\n", bob_key);
+
+    // If Alice and Bob send x^a instead (not secure)
+    unsigned long long alice_send_wrong = (unsigned long long)pow(alice_secret, a) % q;
+    unsigned long long bob_send_wrong = (unsigned long long)pow(bob_secret, a) % q;
+
+    printf("\nIf they send x^a mod q instead:\n");
+    printf("Alice sends: %llu\n", alice_send_wrong);
+    printf("Bob sends: %llu\n", bob_send_wrong);
+
+    printf("\nSecurity notes:\n");
+    printf("1. Standard method secure assuming discrete log hard.\n");
+    printf("2. Sending x^a mod q leaks secrets easily, no shared key.\n");
+    printf("3. Eve can intercept and compute shared key if discrete log is broken.\n");
+    printf("4. Without solving discrete log, Eve can't find secrets or key.\n");
+
+    return 0;
+}
