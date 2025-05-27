@@ -1,0 +1,33 @@
+#include <stdio.h>
+#include <math.h>
+
+// Modular exponentiation: (base^exp) mod n
+unsigned long long mod_exp(unsigned long long base, unsigned long long exp, unsigned long long n) {
+    unsigned long long result = 1;
+    base = base % n;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % n;
+        base = (base * base) % n;
+        exp >>= 1;
+    }
+    return result;
+}
+
+int main() {
+    unsigned long long e = 65537;          // public exponent (large)
+    unsigned long long n = 999630013489;   // large modulus (example)
+    
+    unsigned long long ciphertext = 123456789; // intercepted ciphertext for one letter
+    
+    // Brute force all possible plaintext letters (0 to 25)
+    for (int p = 0; p < 26; p++) {
+        unsigned long long c = mod_exp(p, e, n);
+        if (c == ciphertext) {
+            printf("Plaintext letter found: %c (integer %d)\n", 'A' + p, p);
+            break;
+        }
+    }
+
+    printf("This shows encrypting single letters separately is insecure.\n");
+    return 0;
+}
